@@ -1,210 +1,13 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Vegan Detector Dashboard</title>
-    <style>
-      :root {
-        --bg: #ffffff;
-        --ink: #1c2923;
-        --muted: #546b60;
-        --card: #f7fbf8;
-        --accent: #00a756;
-        --accent-dark: #0c8e56;
-        --line: rgba(28, 41, 35, 0.14);
-        --shadow: 0 18px 40px rgba(28, 41, 35, 0.12);
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        font-family: "Monospace", "Palatino Linotype", "Book Antiqua", Palatino, serif;
-        color: var(--ink);
-        background: #ffffff);
-      }
-      .page {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 32px 24px 64px;
-        display: grid;
-        gap: 24px;
-      }
-      .hero {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        align-items: center;
-        justify-content: space-between;
-        padding: 24px;
-        background: linear-gradient(130deg, rgba(106, 168, 138, 0.2), rgba(247, 251, 248, 0.95));
-        border-radius: 18px;
-        box-shadow: var(--shadow);
-        animation: fadeIn 0.6s ease-out;
-      }
-      .hero h1 {
-        margin: 0 0 8px;
-        font-size: 32px;
-        letter-spacing: 0.4px;
-      }
-      .hero p {
-        margin: 0;
-        color: var(--muted);
-      }
-      .actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-      }
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 10px 16px;
-        border-radius: 999px;
-        border: 1px solid var(--accent);
-        background: var(--accent);
-        color: #fff;
-        text-decoration: none;
-        font-weight: 600;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-      }
-      .btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 18px rgba(106, 168, 138, 0.35);
-      }
-      .btn.secondary {
-        background: transparent;
-        color: var(--accent);
-      }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 16px;
-      }
-      .card {
-        padding: 18px;
-        border-radius: 16px;
-        background: var(--card);
-        border: 1px solid var(--line);
-        box-shadow: 0 10px 24px rgba(28, 41, 35, 0.1);
-        animation: fadeIn 0.6s ease-out;
-      }
-      .card .label {
-        color: var(--muted);
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-      }
-      .card .value {
-        font-size: 28px;
-        margin-top: 10px;
-        font-weight: 700;
-      }
-      .panel {
-        padding: 20px 24px;
-        border-radius: 18px;
-        background: #f8fcf9;
-        border: 1px solid var(--line);
-        box-shadow: var(--shadow);
-      }
-      .panel h2 {
-        margin: 0 0 16px;
-        font-size: 22px;
-      }
-      .notice {
-        padding: 10px 14px;
-        background: rgba(106, 168, 138, 0.18);
-        border: 1px solid rgba(106, 168, 138, 0.35);
-        border-radius: 12px;
-        color: var(--accent-dark);
-        margin-bottom: 16px;
-      }
-      .form-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-      }
-      .form-row input {
-        padding: 10px 12px;
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        font-size: 16px;
-        min-width: 120px;
-      }
-      .columns {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 16px;
-      }
-      .food-list {
-        display: grid;
-        gap: 8px;
-      }
-      .food-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 10px;
-        border-radius: 10px;
-        background: rgba(28, 41, 35, 0.06);
-      }
-      .scroll {
-        max-height: 420px;
-        overflow-y: auto;
-        padding-right: 8px;
-        display: grid;
-        gap: 16px;
-      }
-      .conversation {
-        padding: 16px;
-        border-radius: 14px;
-        background: #f8fcf9;
-        border: 1px solid var(--line);
-      }
-      .meta {
-        color: var(--muted);
-        font-size: 13px;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
-      .foods {
-        margin-bottom: 10px;
-      }
-      .messages {
-        display: grid;
-        gap: 6px;
-        font-size: 14px;
-      }
-      .message {
-        padding: 8px 10px;
-        border-radius: 10px;
-      }
-      .message.waiter {
-        background: rgba(106, 168, 138, 0.2);
-      }
-      .message.customer {
-        background: rgba(28, 41, 35, 0.08);
-      }
-      .message .role {
-        font-weight: 700;
-        margin-right: 6px;
-        text-transform: capitalize;
-      }
-      .empty {
-        color: var(--muted);
-        font-style: italic;
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-    </style>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
   </head>
-  <body>
+  <body class="dashboard">
     <div class="page">
       <section class="hero">
         <div>
@@ -246,7 +49,7 @@
           {% csrf_token %}
           <div class="form-row">
             <input type="number" name="count" min="1" max="100" value="1" required>
-            Diet detector type:
+            Diet detector mode:
             <select name="diet-mode" required>
               <option value="self" selected>Diet: self</option>
               <option value="rules">Diet: rules</option>
@@ -255,6 +58,11 @@
             <button class="btn" type="submit">Generate</button>
           </div>
         </form>
+        <div class="hint">
+          Diet modes (customer's output diet determination logic):<br>self = use `customer_fav["diet"]`<br>
+          rules = `classify_diet_rules(favorite_foods, ordered_dishes)`<br>
+          llm = waiter uses `generate_structured` to classify (+1 LLM call)
+        </div>
       </section>
 
       <section class="columns">

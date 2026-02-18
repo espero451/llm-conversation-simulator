@@ -1,116 +1,13 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chatbot</title>
-    <style>
-      :root {
-        --bg: #ffffff;
-        --ink: #1c2923;
-        --muted: #546b60;
-        --accent: #00a756;
-        --accent-soft: rgba(44, 110, 73, 0.12);
-        --panel: #ffffff;
-        --line: rgba(29, 36, 33, 0.12);
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        font-family: "Monospace", "Lucida Sans", sans-serif;
-        color: var(--ink);
-        background: #ffffff;);
-      }
-      .page {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 32px 24px 48px;
-        display: grid;
-        gap: 20px;
-      }
-      header {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        gap: 12px;
-        align-items: center;
-      }
-      h1 {
-        margin: 0;
-        font-size: 28px;
-      }
-      p {
-        margin: 0;
-        color: var(--muted);
-      }
-      .panel {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 18px;
-        box-shadow: 0 16px 32px rgba(29, 36, 33, 0.1);
-      }
-      #log {
-        display: grid;
-        gap: 10px;
-        max-height: 420px;
-        overflow-y: auto;
-        padding-right: 6px;
-      }
-      .bubble {
-        padding: 12px 14px;
-        border-radius: 16px;
-        background: var(--accent-soft);
-      }
-      .bubble.user {
-        background: rgba(29, 36, 33, 0.08);
-      }
-      .bubble .role {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: var(--muted);
-        margin-bottom: 4px;
-      }
-      form {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-        align-items: center;
-      }
-      input[type="text"] {
-        padding: 12px 14px;
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        font-size: 16px;
-      }
-      button {
-        padding: 12px 18px;
-        border-radius: 999px;
-        border: none;
-        background: var(--accent);
-        color: #fff;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      button:hover {
-        filter: brightness(0.95);
-      }
-      .links {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-      .links a {
-        color: var(--accent);
-        text-decoration: none;
-        font-weight: 600;
-      }
-    </style>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
   </head>
-  <body>
+  <body class="chatbot">
     <div class="page">
       <header>
         <div>

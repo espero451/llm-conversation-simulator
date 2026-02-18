@@ -23,6 +23,7 @@ TOP_FOODS_COUNT = 10  # Top foods per group
 DIET_MODES = {"self", "rules", "llm"}  # Allowed diet modes
 
 
+# Verify Basic Auth credentials from the request header.
 def _check_basic_auth(request):
     header = request.META.get("HTTP_AUTHORIZATION", "")
     if not header.startswith("Basic "):
@@ -40,6 +41,7 @@ def _check_basic_auth(request):
     return ok_user and ok_pass  # Verify credentials
 
 
+# Return a 401 response if Basic Auth fails.
 def _require_basic_auth(request):
     if _check_basic_auth(request):
         return None  # Auth ok
@@ -48,6 +50,7 @@ def _require_basic_auth(request):
     return response  # Request auth
 
 
+# Parse and clamp numeric inputs to avoid oversized runs or exports.
 def _coerce_int(value, default, min_value, max_value):
     try:
         parsed = int(value)
@@ -56,6 +59,7 @@ def _coerce_int(value, default, min_value, max_value):
     return max(min_value, min(parsed, max_value))  # Clamp to range
 
 
+# Aggregate top foods per diet from conversation rows.
 def _top_foods_by_diet(rows, top_n):
     counters = {diet: Counter() for diet, _ in Conversation.DIET_CHOICES}  # Buckets
     for row in rows:
@@ -73,6 +77,7 @@ def _top_foods_by_diet(rows, top_n):
     return {diet: counter.most_common(top_n) for diet, counter in counters.items()}  # Top lists
 
 
+# Serve vegetarian/vegan summaries with favorite foods.
 def vegetarian_summary(request):
     auth_response = _require_basic_auth(request)
     if auth_response:
@@ -84,6 +89,7 @@ def vegetarian_summary(request):
     return JsonResponse({"count": len(items), "items": items})  # Return summary
 
 
+# Export latest simulations in JSON or CSV.
 def simulations_latest(request):
     auth_response = _require_basic_auth(request)
     if auth_response:
@@ -129,6 +135,7 @@ def simulations_latest(request):
     return JsonResponse({"count": len(items), "items": items})  # Send JSON payload
 
 
+# Trigger a sync simulation run from a POST request.
 def simulations_run(request):
     auth_response = _require_basic_auth(request)
     if auth_response:
@@ -144,6 +151,7 @@ def simulations_run(request):
     return redirect(f"{dashboard_url}?ran={count}")  # Return to dashboard
 
 
+# Render the dashboard with metrics and recent conversations.
 def dashboard(request):
     auth_response = _require_basic_auth(request)
     if auth_response:
@@ -170,7 +178,11 @@ def dashboard(request):
     return render(request, "conversations/dashboard.html", context)  # Render UI
 
 
+# Render the chatbot UI page.
 def chatbot_ui(request):
+    auth_response = _require_basic_auth(request)
+    if auth_response:
+        return auth_response  # Enforce auth
     return render(request, "conversations/chatbot.html")  # Simple chat page
 
 
@@ -178,11 +190,14 @@ BOT_INSTRUCTIONS = (
     "You are a polite restaurant waiter. "
     "Ask the user what their top 3 favorite foods are. "
     "Keep it as an open question with an open answer."
-)  # Bot behavior
-
+)
 
 @csrf_exempt
+# Handle chatbot requests and return model replies.
 def chatbot(request):
+    auth_response = _require_basic_auth(request)
+    if auth_response:
+        return auth_response  # Enforce auth
     if request.method != "POST":
         return JsonResponse({"error": "POST only"}, status=405)  # Method guard
     try:
