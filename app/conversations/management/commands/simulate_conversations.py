@@ -105,7 +105,8 @@ class Command(BaseCommand):
                         "favorite_foods",
                     )
                     conv.diet = customer_fav["diet"]
-                    conv.favorite_foods = customer_fav["favorite_foods"]
+                   # conv.favorite_foods = customer_fav["favorite_foods"]
+                    conv.favorite_foods = [food.strip().lower() for food in customer_fav["favorite_foods"]]  # Normalize
                     Message.objects.create(
                         conversation=conv,
                         role="customer",
@@ -132,7 +133,8 @@ class Command(BaseCommand):
                         ORDER_SCHEMA,
                         "order",
                     )
-                    conv.ordered_dishes = customer_order["ordered_dishes"]
+                   # conv.ordered_dishes = customer_order["ordered_dishes"]
+                    conv.ordered_dishes = [dish.strip().lower() for dish in customer_order["ordered_dishes"]]  # Normalize
                     Message.objects.create(
                         conversation=conv,
                         role="customer",
