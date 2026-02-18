@@ -4,9 +4,9 @@ services:
     container_name: elephant_db
     restart: always
     environment:
-      POSTGRES_DB: elephant
-      POSTGRES_USER: elephant
-      POSTGRES_PASSWORD: elephant
+      POSTGRES_DB: ${DB_NAME:-elephant}
+      POSTGRES_USER: ${DB_USER:-elephant}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-elephant}
     ports:
       - "5442:5432"
     volumes:
