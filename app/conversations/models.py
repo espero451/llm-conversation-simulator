@@ -6,7 +6,7 @@ class Conversation(models.Model):
         ("omnivore", "Omnivore"),
         ("vegetarian", "Vegetarian"),
         ("vegan", "Vegan"),
-    ]  # Diet options for filtering
+    ]
 
     created_at = models.DateTimeField(auto_now_add=True)  # Creation timestamp
     customer_label = models.CharField(max_length=64)  # Stable label per sim
@@ -14,12 +14,12 @@ class Conversation(models.Model):
         max_length=16,
         choices=DIET_CHOICES,
         default="omnivore",
-    )  # Diet tag for filters
-    favorite_foods = models.JSONField(default=list)  # Top 3 foods
-    ordered_dishes = models.JSONField(default=list)  # Orders in this convo
+    )
+    favorite_foods = models.JSONField(default=list)  # Top 3 favorite foods
+    ordered_dishes = models.JSONField(default=list)  # Orders in conversation
 
     def __str__(self):
-        return f"Conversation {self.id} ({self.diet})"  # Admin label
+        return f"Conversation {self.id} ({self.diet})"
 
 
 class Message(models.Model):

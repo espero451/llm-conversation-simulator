@@ -44,12 +44,14 @@ DIET_RULES_TEXT = {
 TOKEN_RE = re.compile(r"\b[\w']+\b", re.UNICODE)  # Extract word tokens
 
 
-def _tokenize(text):
+# Normalize text into a set of lowercase word tokens.
+def _tokenize(text: str) -> set[str]:
     cleaned = text.replace("-", " ")  # Split hyphenated words
     return set(TOKEN_RE.findall(cleaned.lower()))  # Normalize tokens
 
 
-def _collect_tokens(items):
+# Aggregate unique tokens across a list of input items.
+def _collect_tokens(items: list[str] | None) -> set[str]:
     tokens = set()
     for item in items or []:
         if not item:
@@ -58,7 +60,11 @@ def _collect_tokens(items):
     return tokens  # Combined tokens
 
 
-def classify_diet_rules(favorite_foods, ordered_dishes):
+# Infer diet by checking food tokens against meat and animal-product keywords.
+def classify_diet_rules(
+    favorite_foods: list[str] | None,
+    ordered_dishes: list[str] | None,
+) -> str | None:
     tokens = _collect_tokens(favorite_foods) | _collect_tokens(ordered_dishes)
     if not tokens:
         return None  # No evidence
