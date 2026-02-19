@@ -2,14 +2,13 @@ import os
 from openai import OpenAI
 import json
 
-
 DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1")  # Allow env override
 
 
-def generate_text(user_input, instructions):
+def generate_text(user_input: str, instructions: str) -> str:
     if not os.environ.get("OPENAI_API_KEY"):
-        raise RuntimeError("OPENAI_API_KEY is not set")  # Fail fast when key missing
-    client = OpenAI()  # SDK reads key from env
+        raise RuntimeError("OPENAI_API_KEY is not set")
+    client = OpenAI()
     response = client.responses.create(
         model=DEFAULT_MODEL,
         input=user_input,
@@ -18,10 +17,12 @@ def generate_text(user_input, instructions):
     return response.output_text.strip()  # Normalize output for storage
 
 
-def generate_structured(user_input, instructions, schema, name):
+def generate_structured(
+    user_input: str, instructions: str, schema: dict[str, object], name: str
+) -> dict[str, object]:
     if not os.environ.get("OPENAI_API_KEY"):
-        raise RuntimeError("OPENAI_API_KEY is not set")  # Fail fast when key missing
-    client = OpenAI()  # SDK reads key from env
+        raise RuntimeError("OPENAI_API_KEY is not set")
+    client = OpenAI()
     response = client.responses.create(
         model=DEFAULT_MODEL,
         input=user_input,

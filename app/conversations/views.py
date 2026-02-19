@@ -15,7 +15,6 @@ from django.views.decorators.csrf import csrf_exempt
 from .llm import generate_text
 from .models import Conversation
 
-
 MAX_RUN_COUNT = 100  # Safety cap for sync runs
 MAX_EXPORT_COUNT = 500  # Limit export payload
 DASHBOARD_LATEST_COUNT = 100  # UI list size
@@ -74,7 +73,9 @@ def _top_foods_by_diet(rows, top_n):
             if not normalized:
                 continue  # Skip empty
             counters[diet][normalized] += 1  # Count foods
-    return {diet: counter.most_common(top_n) for diet, counter in counters.items()}  # Top lists
+    return {
+        diet: counter.most_common(top_n) for diet, counter in counters.items()
+    }  # Top lists
 
 
 # Serve vegetarian/vegan summaries with favorite foods.
@@ -83,8 +84,9 @@ def vegetarian_summary(request):
     if auth_response:
         return auth_response  # Enforce auth
     items = list(
-        Conversation.objects.filter(diet__in=["vegetarian", "vegan"])
-        .values("customer_label", "diet", "favorite_foods")
+        Conversation.objects.filter(diet__in=["vegetarian", "vegan"]).values(
+            "customer_label", "diet", "favorite_foods"
+        )
     )
     return JsonResponse({"count": len(items), "items": items})  # Return summary
 
@@ -106,7 +108,14 @@ def simulations_latest(request):
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(
-            ["id", "created_at", "customer_label", "diet", "favorite_foods", "ordered_dishes"]
+            [
+                "id",
+                "created_at",
+                "customer_label",
+                "diet",
+                "favorite_foods",
+                "ordered_dishes",
+            ]
         )
         for convo in queryset:
             writer.writerow(
@@ -120,7 +129,9 @@ def simulations_latest(request):
                 ]
             )
         response = HttpResponse(output.getvalue(), content_type="text/csv")
-        response["Content-Disposition"] = f'attachment; filename="simulations_latest_{limit}.csv"'
+        response["Content-Disposition"] = (
+            f'attachment; filename="simulations_latest_{limit}.csv"'
+        )
         return response  # Send CSV download
     items = list(
         queryset.values(
@@ -142,11 +153,15 @@ def simulations_run(request):
         return auth_response  # Enforce auth
     if request.method != "POST":
         return JsonResponse({"error": "POST only"}, status=405)  # Method guard
-    count = _coerce_int(request.POST.get("count"), DASHBOARD_LATEST_COUNT, 1, MAX_RUN_COUNT)
+    count = _coerce_int(
+        request.POST.get("count"), DASHBOARD_LATEST_COUNT, 1, MAX_RUN_COUNT
+    )
     diet_mode = request.POST.get("diet-mode", "self")
     if diet_mode not in DIET_MODES:
         diet_mode = "self"  # Fallback for bad input
-    call_command("simulate_conversations", count=count, diet_mode=diet_mode)  # Run sync command
+    call_command(
+        "simulate_conversations", count=count, diet_mode=diet_mode
+    )  # Run sync command
     dashboard_url = reverse("dashboard")
     return redirect(f"{dashboard_url}?ran={count}")  # Return to dashboard
 
@@ -156,10 +171,9 @@ def dashboard(request):
     auth_response = _require_basic_auth(request)
     if auth_response:
         return auth_response  # Enforce auth
-    latest_conversations = (
-        Conversation.objects.order_by("-created_at")
-        .prefetch_related("messages")[:DASHBOARD_LATEST_COUNT]
-    )
+    latest_conversations = Conversation.objects.order_by(
+        "-created_at"
+    ).prefetch_related("messages")[:DASHBOARD_LATEST_COUNT]
     diet_counts = {diet: 0 for diet, _ in Conversation.DIET_CHOICES}  # Baseline
     for row in Conversation.objects.values("diet").annotate(count=Count("id")):
         diet_counts[row["diet"]] = row["count"]  # Fill counts
