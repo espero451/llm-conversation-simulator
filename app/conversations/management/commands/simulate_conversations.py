@@ -6,7 +6,8 @@ from conversations.diet_rules import DIET_RULES_TEXT, classify_diet_rules
 from conversations.llm import generate_text, generate_structured
 from conversations.models import Conversation, Message
 
-# ---------------- Prompt Instructions ----------------
+
+# --- Prompt Instructions ----------------------------------------------
 
 WAITER_INSTRUCTIONS = (
     "You are a restaurant waiter. Be friendly and concise. "
@@ -20,7 +21,7 @@ CUSTOMER_INSTRUCTIONS = (
 )
 
 
-# ---------------- Schemas ----------------
+# --- Schemas ----------------------------------------------------------
 
 FAVORITES_SCHEMA = {
     "type": "object",
@@ -63,7 +64,7 @@ DIET_CLASSIFY_SCHEMA = {
 }  # Diet classifier payload
 
 
-# ---------------- Command ----------------
+# --- Command ----------------------------------------------------------
 
 class Command(BaseCommand):
     help = "Simulate waiter/customer conversations"  # CLI description
@@ -100,7 +101,9 @@ class Command(BaseCommand):
                     turn += 1
 
                     customer_day = generate_text(
-                        f"Waiter said: {waiter_greet}\nReply briefly about your day.",
+                        f"Waiter said: {waiter_greet}\n"
+                        "Reply briefly about your day. "
+                        "Do not order or mention food or drinks.",
                         CUSTOMER_INSTRUCTIONS,
                     )
                     Message.objects.create(
