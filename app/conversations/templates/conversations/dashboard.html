@@ -59,7 +59,8 @@
           </div>
         </form>
         <div class="hint">
-          Diet modes (customer's output diet determination logic):<br>self = use `customer_fav["diet"]`<br>
+          Diet modes (customer's output diet classification logic):<br>
+          self = `self_diet`<br>
           rules = `classify_diet_rules(favorite_foods, ordered_dishes)`<br>
           llm = waiter uses `generate_structured` to classify (+1 LLM call)
         </div>
