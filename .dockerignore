@@ -12,3 +12,5 @@ tmp
 prod
 *.log
 .DS_Store
+.env.local
+.env

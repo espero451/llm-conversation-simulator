@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-import os  # Read env vars
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,14 +21,15 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "insecure-change-me")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "0") == "1"  # Toggle debug from env
 
-ALLOWED_HOSTS = [
-    h.strip()
-    for h in os.environ.get(
-        "ALLOWED_HOSTS",
-        "localhost,127.0.0.1,0.0.0.0",
-    ).split(",")
-    if h.strip()
-]  # Protect host header
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
+# ALLOWED_HOSTS = [
+#     h.strip()
+#     for h in os.environ.get(
+#         "ALLOWED_HOSTS",
+#         "localhost,127.0.0.1,0.0.0.0",
+#     ).split(",")
+#     if h.strip()
+# ]  # Protect host header
 
 
 # Application definition
@@ -73,6 +74,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+DB_SSLMODE = os.environ.get("DB_SSLMODE", "").strip()  # Optional DB TLS mode
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
@@ -85,6 +87,7 @@ DATABASES = {
         "PASSWORD": os.environ.get("DB_PASSWORD", "elephant"),
         "HOST": os.environ.get("DB_HOST", "db"),
         "PORT": os.environ.get("DB_PORT", "5432"),
+        **({"OPTIONS": {"sslmode": DB_SSLMODE}} if DB_SSLMODE else {}),
     }
 }
 
