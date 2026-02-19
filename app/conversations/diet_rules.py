@@ -35,12 +35,6 @@ ANIMAL_PRODUCT_KEYWORDS = {
     "honey",
 }  # Detect dairy or eggs
 
-DIET_RULES_TEXT = {
-    "vegan": "Vegan: no meat, fish, dairy, eggs, or honey.",
-    "vegetarian": "Vegetarian: no meat or fish; dairy and eggs allowed.",
-    "omnivore": "Omnivore: any foods allowed.",
-}  # Prompt rules for diet
-
 TOKEN_RE = re.compile(r"\b[\w']+\b", re.UNICODE)  # Extract word tokens
 
 

@@ -2,7 +2,7 @@ import random
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from conversations.diet_rules import DIET_RULES_TEXT, classify_diet_rules
+from conversations.diet_rules import classify_diet_rules
 from conversations.llm import generate_text, generate_structured
 from conversations.models import Conversation, Message
 
@@ -20,6 +20,21 @@ CUSTOMER_INSTRUCTIONS = (
     "Follow the request and stay in character."
 )
 
+# TODO:
+# DIET_RULES_INLINE and DIET_RULES_TEXT should be refactored and
+# united to have only one source of diet rules.
+
+DIET_RULES_INLINE = (
+    "vegan = no meat, fish, dairy, eggs, honey; "
+    "vegetarian = no meat or fish; "
+    "omnivore = any foods.\n"
+)
+
+DIET_RULES_TEXT = {
+    "vegan": "Vegan: no meat, fish, dairy, eggs, or honey.",
+    "vegetarian": "Vegetarian: no meat or fish; dairy and eggs allowed.",
+    "omnivore": "Omnivore: any foods allowed.",
+}
 
 # --- Schemas ----------------------------------------------------------
 
@@ -134,8 +149,7 @@ class Command(BaseCommand):
                             "Set the JSON diet field to exactly this value.\n"
                             "Do not mention your diet or the words vegan/vegetarian/omnivore in the message.\n"
                             "Return 3 favorite foods that strictly match your diet.\n"
-                            "Rules: vegan = no meat, fish, dairy, eggs, honey; "
-                            "vegetarian = no meat or fish; omnivore = any foods.\n"
+                            f"Rules: {DIET_RULES_INLINE}"
                             "Return JSON only."
                         ),
                         CUSTOMER_INSTRUCTIONS,
@@ -181,22 +195,21 @@ class Command(BaseCommand):
                         content=customer_order["message"],
                         turn_index=turn,
                     )
-                    final_diet = self_diet  # Default diet
-                    if diet_mode == "rules":
+                    final_diet = self_diet  # Default diet classification mode: self
+                    if diet_mode == "rules":  # Diet classification mode: rules
                         final_diet = classify_diet_rules(
                             conv.favorite_foods,
                             conv.ordered_dishes,
                         ) or self_diet
-                    elif diet_mode == "llm":
+                    elif diet_mode == "llm":  # Diet classification mode: llm
                         diet_check = generate_structured(
                             (
-                                "You are the waiter. Classify the diet based on foods.\n"
-                                f"Favorite foods: {conv.favorite_foods}\n"
-                                f"Ordered dishes: {conv.ordered_dishes}\n"
-                                "vegan = no meat, fish, dairy, eggs, honey; "
-                                "vegetarian = no meat or fish; omnivore = any foods.\n"
-                                "Return JSON only."
-                            ),
+                            "You are the waiter. Classify the diet based on foods.\n"
+                            f"Favorite foods: {conv.favorite_foods}\n"
+                            f"Ordered dishes: {conv.ordered_dishes}\n"
+                            f"{DIET_RULES_INLINE}"
+                            "Return JSON only."
+                        ),
                             WAITER_INSTRUCTIONS,
                             DIET_CLASSIFY_SCHEMA,
                             "diet_classification",
