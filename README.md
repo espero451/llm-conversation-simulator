@@ -10,7 +10,8 @@ Key capabilities:
 - Chat with a waiter-style bot.
 
 ## Tech Stack
-- Django 5+ (backend, templates)
+- Django 5+ (backend, templates, session authentication)
+- Django REST Framework (API layer, serializers, permissions, CSRF integration)
 - PostgreSQL (database)
 - OpenAI API (LLM generation)
 - Gunicorn + WhiteNoise (serving)
@@ -19,44 +20,26 @@ Key capabilities:
 ## Endpoints
 
 UI:
-- `GET /dashboard/` Dashboard UI (Basic Auth required)
-- `GET /chatbot/` Chatbot UI (Basic Auth required)
+- `GET /dashboard/` Dashboard UI
+- `GET /chatbot/` Chatbot UI
 
 API:
-- `POST /api/chatbot/` Chatbot reply (Basic Auth required, JSON: `{"message": "..."}`)
-- `GET /api/vegetarians/` Vegetarian/vegan summary (Basic Auth required)
-- `GET /api/simulations/latest/?format=json|csv&limit=100` Export latest simulations (Basic Auth required)
-- `POST /api/simulations/run/` Run simulations (Basic Auth required, form field `count`, optional `diet-mode` = `self|rules|llm`)
+- `POST /api/chatbot/` Chatbot reply
+- `GET /api/vegetarians/` Vegetarians / vegans summary
+- `GET /api/simulations/latest/?format=json|csv&limit=100` Export latest simulations
+- `POST /api/simulations/run/` Run simulations (form field `count`, optional `diet-mode` = `self|rules|llm`)
 
-Example curl:
-```bash
-# Chatbot API
-curl -u "$API_USER:$API_PASSWORD" -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Hi"}' \
-  http://localhost:8000/api/chatbot/
+## Authentication & Security
 
-# Vegetarian/vegan summary
-curl -u "$API_USER:$API_PASSWORD" \
-  http://localhost:8000/api/vegetarians/
-
-# Latest simulations (JSON or CSV)
-curl -u "$API_USER:$API_PASSWORD" \
-  "http://localhost:8000/api/simulations/latest/?format=json&limit=5"
-curl -u "$API_USER:$API_PASSWORD" \
-  "http://localhost:8000/api/simulations/latest/?format=csv&limit=5"
-
-# Run simulations with diet mode
-curl -u "$API_USER:$API_PASSWORD" -X POST \
-  -d "count=50" -d "diet-mode=rules" \
-  http://localhost:8000/api/simulations/run/
-```
+- Django session-based authentication.
+- All UI and API endpoints require an authenticated user.
+- CSRF protection is enforced for all unsafe HTTP methods (POST, PUT, PATCH, DELETE).
+- Permissions are enforced via Django's built-in permission system.
 
 ## Configuration
 Set these environment variables (create `.env` file for local defaults):
 - `OPENAI_API_KEY` Required for simulations and chatbot.
 - `OPENAI_MODEL` Optional, default `gpt-4.1`.
-- `API_USER` / `API_PASSWORD` Basic Auth for protected endpoints.
 - `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` Database config.
 
 ## Running (Docker)
