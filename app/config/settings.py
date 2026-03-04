@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'conversations',
 ]
 
@@ -102,6 +103,17 @@ USE_TZ = True
 STATIC_URL = "/static/"  # Public URL prefix for static files
 STATIC_ROOT = BASE_DIR / "staticfiles"  # collectstatic output for serving
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"  # Hashed files for caching
+
+# --- Rest Framework Defaults -----------------------------------------
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip()

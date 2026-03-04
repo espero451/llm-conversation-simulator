@@ -63,6 +63,10 @@ Set these environment variables (create `.env` file for local defaults):
 ```bash
 docker-compose up --build
 ```
+
+Add user:
+`docker compose exec web python3 manage.py createsuperuser`
+
 Open:
 - Dashboard: `http://localhost:8000/dashboard/`
 - Chatbot UI: `http://localhost:8000/chatbot/`

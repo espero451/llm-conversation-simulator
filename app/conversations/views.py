@@ -1,61 +1,31 @@
-import base64
 import csv
 import io
-import json
 import os
-import secrets
 from collections import Counter
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.management import call_command
 from django.db.models import Count
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from .constants import (
+    DASHBOARD_LATEST_COUNT,
+    TOP_FOODS_COUNT,
+)
 from .llm import generate_text
 from .models import Conversation
-
-MAX_RUN_COUNT = 100  # Safety cap for sync runs
-MAX_EXPORT_COUNT = 500  # Limit export payload
-DASHBOARD_LATEST_COUNT = 100  # UI list size
-TOP_FOODS_COUNT = 10  # Top foods per group
-DIET_MODES = {"self", "rules", "llm"}  # Allowed diet modes
-
-
-# Verify Basic Auth credentials from the request header.
-def _check_basic_auth(request):
-    header = request.META.get("HTTP_AUTHORIZATION", "")
-    if not header.startswith("Basic "):
-        return False  # Missing auth header
-    try:
-        encoded = header.split(" ", 1)[1]
-        decoded = base64.b64decode(encoded).decode("utf-8")
-        user, _, password = decoded.partition(":")
-    except (ValueError, UnicodeDecodeError):
-        return False  # Bad auth header
-    expected_user = os.environ.get("API_USER", "")
-    expected_password = os.environ.get("API_PASSWORD", "")
-    ok_user = secrets.compare_digest(user, expected_user)
-    ok_pass = secrets.compare_digest(password, expected_password)
-    return ok_user and ok_pass  # Verify credentials
-
-
-# Return a 401 response if Basic Auth fails.
-def _require_basic_auth(request):
-    if _check_basic_auth(request):
-        return None  # Auth ok
-    response = JsonResponse({"error": "Unauthorized"}, status=401)
-    response["WWW-Authenticate"] = 'Basic realm="api"'
-    return response  # Request auth
-
-
-# Parse and clamp numeric inputs to avoid oversized runs or exports.
-def _coerce_int(value, default, min_value, max_value):
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        return default  # Fallback for bad input
-    return max(min_value, min(parsed, max_value))  # Clamp to range
+from .serializers import (
+    ChatbotPayloadSerializer,
+    DashboardQuerySerializer,
+    SimulationsLatestQuerySerializer,
+    SimulationsRunSerializer,
+)
 
 
 # Aggregate top foods per diet from conversation rows.
@@ -79,10 +49,9 @@ def _top_foods_by_diet(rows, top_n):
 
 
 # Serve vegetarian/vegan summaries with favorite foods.
+@login_required
+@permission_required("conversations.view_conversation", raise_exception=True)
 def vegetarian_summary(request):
-    auth_response = _require_basic_auth(request)
-    if auth_response:
-        return auth_response  # Enforce auth
     items = list(
         Conversation.objects.filter(diet__in=["vegetarian", "vegan"]).values(
             "customer_label", "diet", "favorite_foods"
@@ -92,17 +61,14 @@ def vegetarian_summary(request):
 
 
 # Export latest simulations in JSON or CSV.
+@login_required
+@permission_required("conversations.view_conversation", raise_exception=True)
 def simulations_latest(request):
-    auth_response = _require_basic_auth(request)
-    if auth_response:
-        return auth_response  # Enforce auth
-    limit = _coerce_int(
-        request.GET.get("limit"),
-        DASHBOARD_LATEST_COUNT,
-        1,
-        MAX_EXPORT_COUNT,
-    )
-    export_format = request.GET.get("format", "json").lower()
+    serializer = SimulationsLatestQuerySerializer(data=request.GET)
+    if not serializer.is_valid():
+        return JsonResponse(serializer.errors, status=400)  # Invalid query
+    limit = serializer.validated_data["limit"]
+    export_format = serializer.validated_data["format"]
     queryset = Conversation.objects.order_by("-created_at")[:limit]  # Latest sims
     if export_format == "csv":
         output = io.StringIO()
@@ -147,18 +113,19 @@ def simulations_latest(request):
 
 
 # Trigger a sync simulation run from a POST request.
+@login_required
+@permission_required("conversations.add_conversation", raise_exception=True)
 def simulations_run(request):
-    auth_response = _require_basic_auth(request)
-    if auth_response:
-        return auth_response  # Enforce auth
     if request.method != "POST":
         return JsonResponse({"error": "POST only"}, status=405)  # Method guard
-    count = _coerce_int(
-        request.POST.get("count"), DASHBOARD_LATEST_COUNT, 1, MAX_RUN_COUNT
-    )
-    diet_mode = request.POST.get("diet-mode", "self")
-    if diet_mode not in DIET_MODES:
-        diet_mode = "self"  # Fallback for bad input
+    payload = request.POST.copy()
+    if "diet-mode" in payload and "diet_mode" not in payload:
+        payload["diet_mode"] = payload["diet-mode"]  # Map form field name
+    serializer = SimulationsRunSerializer(data=payload)
+    if not serializer.is_valid():
+        return JsonResponse(serializer.errors, status=400)  # Invalid payload
+    count = serializer.validated_data["count"]
+    diet_mode = serializer.validated_data["diet_mode"]
     call_command(
         "simulate_conversations", count=count, diet_mode=diet_mode
     )  # Run sync command
@@ -167,10 +134,9 @@ def simulations_run(request):
 
 
 # Render the dashboard with metrics and recent conversations.
+@login_required
+@permission_required("conversations.view_conversation", raise_exception=True)
 def dashboard(request):
-    auth_response = _require_basic_auth(request)
-    if auth_response:
-        return auth_response  # Enforce auth
     latest_conversations = Conversation.objects.order_by(
         "-created_at"
     ).prefetch_related("messages")[:DASHBOARD_LATEST_COUNT]
@@ -181,7 +147,9 @@ def dashboard(request):
         Conversation.objects.values("diet", "favorite_foods"),
         TOP_FOODS_COUNT,
     )
-    ran_count = _coerce_int(request.GET.get("ran"), 0, 0, MAX_RUN_COUNT)
+    serializer = DashboardQuerySerializer(data=request.GET)
+    serializer.is_valid()  # Keep dashboard usable with invalid query params
+    ran_count = serializer.validated_data.get("ran", 0)
     context = {
         "latest_conversations": latest_conversations,
         "diet_counts": diet_counts,
@@ -193,10 +161,9 @@ def dashboard(request):
 
 
 # Render the chatbot UI page.
+@login_required
+@permission_required("conversations.view_conversation", raise_exception=True)
 def chatbot_ui(request):
-    auth_response = _require_basic_auth(request)
-    if auth_response:
-        return auth_response  # Enforce auth
     return render(request, "conversations/chatbot.html")  # Simple chat page
 
 
@@ -206,18 +173,18 @@ BOT_INSTRUCTIONS = (
     "Keep it as an open question with an open answer."
 )
 
-@csrf_exempt
-# Handle chatbot requests and return model replies.
-def chatbot(request):
-    auth_response = _require_basic_auth(request)
-    if auth_response:
-        return auth_response  # Enforce auth
-    if request.method != "POST":
-        return JsonResponse({"error": "POST only"}, status=405)  # Method guard
-    try:
-        payload = json.loads(request.body.decode("utf-8"))
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)  # Bad JSON
-    user_input = payload.get("message", "")
-    reply = generate_text(user_input, BOT_INSTRUCTIONS)  # LLM reply
-    return JsonResponse({"reply": reply})  # API response
+class ChatbotAPIView(APIView):
+    authentication_classes = [SessionAuthentication]  # Enforce CSRF for sessions
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs) -> Response:
+        serializer = ChatbotPayloadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user_input = serializer.validated_data["message"]
+        reply = generate_text(user_input, BOT_INSTRUCTIONS)
+
+        return Response({"reply": reply}, status=status.HTTP_200_OK)
+
+
+chatbot = ChatbotAPIView.as_view()
