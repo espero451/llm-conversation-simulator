@@ -104,7 +104,8 @@ class Command(BaseCommand):
                     turn = 1
 
                     waiter_greet = generate_text(
-                        "Greet the customer and ask if they had a good day.",
+                        "Greet the customer and ask if they had a good day. "
+                        "Do not ask about order, food or drink.",
                         WAITER_INSTRUCTIONS,
                     )
                     Message.objects.create(
@@ -118,7 +119,8 @@ class Command(BaseCommand):
                     customer_day = generate_text(
                         f"Waiter said: {waiter_greet}\n"
                         "Reply briefly about your day. "
-                        "Do not order or mention food or drinks.",
+                        "Do not order or mention food or drinks. "
+                        "Do not ask questions.",
                         CUSTOMER_INSTRUCTIONS,
                     )
                     Message.objects.create(
